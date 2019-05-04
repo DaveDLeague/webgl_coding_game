@@ -461,7 +461,7 @@ class Camera {
             right.z, up.z, -fwd.z, 0,
             x, y, z, 1
         ];
-        this.position = new Vector3(-x, -y, -z);
+        this.position = new Vector3(x, -z, -y);
         this.viewMatrix.getForwardVector(this.forward);
         this.viewMatrix.getUpVector(this.up);
         this.viewMatrix.getRightVector(this.right);

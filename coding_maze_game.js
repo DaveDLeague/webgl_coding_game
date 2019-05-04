@@ -281,6 +281,7 @@ function setup(){
     codePanel.style.width = windowWidth / 3;
     codePanel.style.height = windowHeight / 1.5;
     codePanel.style.borderStyle = "solid";
+    codePanel.style.overflowY = "auto"
     body.appendChild(codePanel);
 
     codeButtonPanel = document.createElement("div");
@@ -314,32 +315,35 @@ function setup(){
 
     renderer = new Renderer3D(canvas);
 
+    let wallTex = [0, 255, 255];
+    let pieceTex = [255, 0, 255];
+    let goalTex = [255, 255, 100];
+
+    ballObject = renderer.createModelWithData(pieceVertices, pieceIndices);
+    ballObject.orientation.rotate(new Vector3(1, 0, 0), Math.PI);
+    let ct = new Texture2D(renderer.gl);
+    ct.initWithBytes(pieceTex, 1, 1, "RGB");
+    ballObject.albedoTexture = ct;
+
     let verts = [];
     let inds = [];
-    generateUVSphereIndexedWithNormalsTexCoords(verts, inds, 16);
-    ballObject = renderer.createModelWithData(verts, inds);
-    let ct = new Texture2D(renderer.gl);
-    ct.initWithBytes(ballImage, 32, 32, "RGB");
-    ballObject.albedoTexture = ct;
-    ballObject.scale = new Vector3(0.5, 0.5, 0.5);
-
-    verts = [];
-    inds = [];
     generateUnitCubeVerticesIndexedWithNormalsTexCoords(verts, inds);
     floorObject = renderer.createModelWithData(verts, inds);
 
     verts = [];
     inds = [];
     generateIcoSphereVerticesIndexedWithNormalsTexCoords(verts, inds);
+    ct = new Texture2D(renderer.gl);
+    ct.initWithBytes(goalTex, 1, 1, "RGB");
     goalObject = renderer.createModelWithData(verts, inds);
     goalObject.scale = new Vector3(0.5, 0.5, 0.5);
+    goalObject.albedoTexture = ct;
 
     wallObject = new Model3D();
     wallObject.indexCount = floorObject.indexCount;
     wallObject.indexOffset = floorObject.indexOffset;
     ct = new Texture2D(renderer.gl);
-    nt = new Texture2D(renderer.gl);
-    ct.initWithBytes(wallImage, 256, 256, "RGB");
+    ct.initWithBytes(wallTex, 1, 1, "RGB");
     wallObject.albedoTexture = ct;
 
     camera = new Camera();
@@ -357,7 +361,7 @@ function setupMaze(mazeWidth, mazeHeight){
     let hw = maze.width * 0.5;
     let hh = maze.height * 0.5;
     floorObject.scale = new Vector3(maze.width, 0.1, maze.height);
-    floorObject.position = new Vector3(hw, -0.55, hh);
+    floorObject.position = new Vector3(hw, 0, hh);
 
     walls = [];
     for(let i = 0; i < maze.width; i++){
@@ -365,28 +369,28 @@ function setupMaze(mazeWidth, mazeHeight){
             let cell = maze.cells[i][j];
             if(cell.westWall){
                 let m = new Matrix4();
-                m.translate(new Vector3(i, 0, j + 0.5));
+                m.translate(new Vector3(i, 0.5, j + 0.5));
                 m.scale(new Vector3(0.05, 1, 1));
                 walls.push(m);
                 totalWalls++;
             }
             if(cell.eastWall){
                 let m = new Matrix4();
-                m.translate(new Vector3(i + 1, 0, j + 0.5));
+                m.translate(new Vector3(i + 1, 0.5, j + 0.5));
                 m.scale(new Vector3(0.05, 1, 1));
                 walls.push(m);
                 totalWalls++;
             }
             if(cell.northWall){
                 let m = new Matrix4();
-                m.translate(new Vector3(i + 0.5, 0, j));
+                m.translate(new Vector3(i + 0.5, 0.5, j));
                 m.scale(new Vector3(1, 1, 0.05));
                 walls.push(m);
                 totalWalls++;
             }
             if(cell.southWall){
                 let m = new Matrix4();
-                m.translate(new Vector3(i + 0.5, 0, j + 1));
+                m.translate(new Vector3(i + 0.5, 0.5, j + 1));
                 m.scale(new Vector3(1, 1, 0.05));
                 walls.push(m);
                 totalWalls++;
@@ -401,7 +405,7 @@ function setupMaze(mazeWidth, mazeHeight){
     mazeStartPosition = new Vector3(maze.startCell.x + 0.5, 0, maze.startCell.y + 0.5);
     ballObject.position = new Vector3(maze.startCell.x + 0.5, 0, maze.startCell.y + 0.5);
     goalObject.position = new Vector3(maze.endCell.x + 0.5, 0, maze.endCell.y + 0.5);
-
+    goalObject.position.y += 0.5;
     goalReached = false;
 }
 
@@ -438,7 +442,7 @@ function drawFrame(){
     }
 
     goalObject.orientation.rotate(new Vector3(Math.random(), Math.random(), Math.random()), deltaTime);
-    // camera.updateView(deltaTime * 2);
+    //camera.updateView(deltaTime * 2);
     camera.lookAt(new Vector3(maze.width / 2, cameraHeight, 0), new Vector3(maze.width / 2, 0, maze.height / 2), new Vector3(0, 1, 0));
     renderer.prepare();
     renderer.renderModel(ballObject, camera);
@@ -484,7 +488,17 @@ function adjustFrameSize(){
 }
 
 function mouseScroll(event){
-    cameraHeight += event.deltaY * 0.001;
+    let mx = event.clientX;
+    let my = event.clientY;
+    let lt = parseInt(canvas.style.left);
+    let tp = parseInt(canvas.style.top);
+    let wt = parseInt(canvas.width);
+    let ht = parseInt(canvas.height); 
+    
+    if(mx > lt && mx < lt + wt &&
+       my > tp && my < tp + ht){
+        cameraHeight += event.deltaY * 0.001;
+    }
 }
 
 function keyUp(event){ 

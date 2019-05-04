@@ -48,6 +48,7 @@ var currentCell;
 var destinationCell;
 
 var bumpWall = false;
+var goalReached = false;
 var initialCellPosition;
 
 window.onload = function(){
@@ -344,8 +345,15 @@ function setup(){
     camera = new Camera();
     camera.setPerspectiveProjection(70.0, canvas.width / canvas.height, 0.001, 1000.0);
 
+    setupMaze(3, 2);
+    
 
-    maze = generateMaze(3, 2, randomInteger(999999));
+    startTime = new Date().getTime();
+    intervalTimer = setInterval(drawFrame, 1000 / 60);
+}
+
+function setupMaze(mazeWidth, mazeHeight){
+    maze = generateMaze(mazeWidth, mazeHeight, randomInteger(999999));
     let hw = maze.width * 0.5;
     let hh = maze.height * 0.5;
     floorObject.scale = new Vector3(maze.width, 0.1, maze.height);
@@ -394,8 +402,7 @@ function setup(){
     ballObject.position = new Vector3(maze.startCell.x + 0.5, 0, maze.startCell.y + 0.5);
     goalObject.position = new Vector3(maze.endCell.x + 0.5, 0, maze.endCell.y + 0.5);
 
-    startTime = new Date().getTime();
-    intervalTimer = setInterval(drawFrame, 1000 / 60);
+    goalReached = false;
 }
 
 function drawFrame(){
@@ -415,13 +422,19 @@ function drawFrame(){
                 ballObject.position = targetPosition;
                 currentCell = destinationCell;
                 if(currentCell.x == maze.endCell.x && currentCell.y == maze.endCell.y){
-                    console.log("WINNER!!");
+                    goalReached = true;
+                    codePanel.innerHTML = "";
+                    codeCommandList = [];
+                    currentExecutingCommand = 0;
+                    setupMaze(maze.width + 1, maze.height + 1);
                 }
                 getNextTargetPosition();
             }
         }
     }else{
-
+        if(goalReached){
+            cameraHeight++;
+        }
     }
 
     goalObject.orientation.rotate(new Vector3(Math.random(), Math.random(), Math.random()), deltaTime);

@@ -1,0 +1,110 @@
+<html>
+    <meta charset='utf-8' />
+    <script src="wallImage.js"></script>
+    <script src="ballImage.js"></script>
+    <script src="utilities.js"></script>
+    <script src="maze_generator.js"></script>
+    <script src="graphics_utilities.js"></script>
+    <script src='renderer3d.js'></script>
+    <script src='coding_maze_game.js'></script>
+    <script id="renderer3dVertexShaderID" type='x-shader/x-vertex'>#version 300 es
+        in vec3 position;
+        in vec3 normal;
+        in vec2 uvCoordinates;
+
+        uniform mat4 cameraMatrix;
+        uniform mat4 modelMatrix;
+
+        out vec2 textureCoordinates;
+        out vec3 modelNorm;
+        out vec3 fragPosition;
+
+        void main(){
+            gl_PointSize = 10.0;
+            textureCoordinates = uvCoordinates;
+            fragPosition = vec3(modelMatrix * vec4(position, 1.0));
+            modelNorm = normal;
+            modelNorm = normalize(mat3(modelMatrix) * normal); //for flat shading
+            gl_Position = cameraMatrix * vec4(fragPosition, 1.0);
+        }
+    </script>
+    <script id="renderer3dFragmentShaderID" type='x-shader/x-fragment'>#version 300 es
+        precision mediump float;
+
+        in vec2 textureCoordinates;
+        in vec3 modelNorm;
+        in vec3 fragPosition;
+
+        uniform vec3 lightPosition;
+        uniform vec3 cameraPosition;
+        uniform sampler2D albedoTex;
+
+        out vec4 pixelColor;
+        void main(){
+            float ambient = 0.2;
+            vec3 lightDir = normalize(lightPosition - fragPosition);
+            float diffuse = max(dot(modelNorm, lightDir), 0.0);
+
+            vec3 viewDir = normalize(cameraPosition - fragPosition);
+            vec3 reflectDir = reflect(-lightDir, modelNorm);  
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+
+            vec4 albedo = texture(albedoTex, textureCoordinates);
+
+            vec3 clr = (diffuse + ambient + spec) * albedo.xyz;
+            pixelColor = vec4(clr, 1.0);
+        }
+    </script>
+
+    <script id="instanceRenderer3dVertexShaderID" type='x-shader/x-vertex'>#version 300 es
+        in vec3 position;
+        in vec3 normal;
+        in vec2 uvCoordinates;
+        in mat4 instanceMatrix;
+
+        uniform mat4 cameraMatrix;
+
+        out vec2 textureCoordinates;
+        out vec3 modelNorm;
+        out vec3 fragPosition;
+
+        void main(){
+            gl_PointSize = 10.0;
+            textureCoordinates = uvCoordinates;
+            fragPosition = vec3(instanceMatrix * vec4(position, 1.0));
+            modelNorm = normal;
+            modelNorm = normalize(mat3(instanceMatrix) * normal); //for flat shading
+            gl_Position = cameraMatrix * vec4(fragPosition, 1.0);
+        }
+    </script>
+    <script id="instanceRenderer3dFragmentShaderID" type='x-shader/x-fragment'>#version 300 es
+        precision mediump float;
+
+        in vec2 textureCoordinates;
+        in vec3 modelNorm;
+        in vec3 fragPosition;
+
+        uniform vec3 lightPosition;
+        uniform vec3 cameraPosition;
+        uniform sampler2D albedoTex;
+
+        out vec4 pixelColor;
+        void main(){
+            float ambient = 0.2;
+            vec3 lightDir = normalize(lightPosition - fragPosition);
+            float diffuse = max(dot(modelNorm, lightDir), 0.0);
+
+            vec3 viewDir = normalize(cameraPosition - fragPosition);
+            vec3 reflectDir = reflect(-lightDir, modelNorm);  
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+
+            vec4 albedo = texture(albedoTex, textureCoordinates);
+
+            vec3 clr = (diffuse + ambient + spec) * albedo.xyz;
+            pixelColor = vec4(clr, 1.0);
+        }
+    </script>
+
+    <body id='bodyID'></body>
+    
+</html>

@@ -4,6 +4,7 @@ class Vector2 {
         this.y = y;
     }
 
+    
     static add(v1, v2, vres){
         vres.x = v1.x + v2.x;
         vres.y = v1.y + v2.y;
